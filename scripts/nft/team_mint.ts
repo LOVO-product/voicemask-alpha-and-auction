@@ -16,10 +16,8 @@ async function main() {
         deployAddress
     );
 
-    //베이스 uri 세팅
-    await voiceMaskAlpha.connect(owner).setBaseURI(baseUri);
-    //민터 세팅
-    await voiceMaskAlpha.connect(owner).setMinter(minter.address);
+    //팀 민팅
+    await voiceMaskAlpha.connect(owner).mintTeam(owner.address, 1);
 }
 
 main()
