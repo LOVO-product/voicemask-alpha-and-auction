@@ -1,9 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.16;
 import "hardhat/console.sol";
-// import { PausableUpgradeable } from '@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol';
-// import { ReentrancyGuardUpgradeable } from '@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol';
-// import { OwnableUpgradeable } from '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
 
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import {Pausable} from "@openzeppelin/contracts/security/Pausable.sol";
@@ -151,6 +148,7 @@ contract VMAAuction is IVMAAuction, Pausable, ReentrancyGuard, Ownable {
      */
     function _createAuction() internal {
         try voiceMaskAlpha.mintAuction() returns (uint256 alphaId) {
+            
             uint256 startTime = block.timestamp;
             uint256 endTime = startTime + duration;
 
@@ -163,9 +161,9 @@ contract VMAAuction is IVMAAuction, Pausable, ReentrancyGuard, Ownable {
                 settled: false
             });
 
-            emit AuctionCreated(alphaId, startTime, endTime);
+        //     emit AuctionCreated(alphaId, startTime, endTime);
         } catch Error(string memory error) {
-            // console.log(error);
+            console.log(error);
             _pause();
             // emit AuctionCreateFailed(error);
         }

@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.16;
+import "hardhat/console.sol";
 
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {IVoiceMaskAlpha} from "./interfaces/IVoiceMaskAlpha.sol";
@@ -22,7 +23,8 @@ contract VoiceMaskAlpha is IVoiceMaskAlpha, ERC721A, ERC721AQueryable, Ownable {
         _;
     }
 
-    function mintAuction() external onlyMinter returns (uint256) {
+    function mintAuction() external onlyMinter returns (uint256) { //
+
         return _mintTo(msg.sender, 1);
     }
 
@@ -66,9 +68,9 @@ contract VoiceMaskAlpha is IVoiceMaskAlpha, ERC721A, ERC721AQueryable, Ownable {
     function _mintTo(address to, uint256 quantity) internal returns (uint256) {
         require(_totalMinted() + quantity <= maxSupply, "All sold out");
 
-        _safeMint(to, quantity);
+        _mint(to, quantity);
         emit AlphaCreated(_totalMinted(), to);
 
-        return _totalMinted();
+        return _nextTokenId()-1;
     }
 }
