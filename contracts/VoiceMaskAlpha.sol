@@ -5,16 +5,16 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {IVoiceMaskAlpha} from "./interfaces/IVoiceMaskAlpha.sol";
 import {ERC721A} from "erc721a/contracts/ERC721A.sol";
 import {ERC721AQueryable} from "erc721a/contracts/extensions/ERC721AQueryable.sol";
-import {ERC721ABurnable} from "erc721a/contracts/extensions/ERC721ABurnable.sol";
+// import {ERC721ABurnable} from "erc721a/contracts/extensions/ERC721ABurnable.sol";
 
-contract VoiceMaskAlpha is IVoiceMaskAlpha, ERC721A, ERC721AQueryable, ERC721ABurnable, Ownable {
+contract VoiceMaskAlpha is IVoiceMaskAlpha, ERC721A, ERC721AQueryable, Ownable {
     
     constructor() ERC721A("THISHOULDBECHANGED", "VMA") {}
 
     address public minter;
     string private baseURI;
-    uint256 public maxSupply = 5;
-    uint256 public teamSupply = 2;
+    uint256 public maxSupply = 50;
+    uint256 public teamSupply = 10;
     uint256 public teamCount = 0;
 
     modifier onlyMinter() {
@@ -36,7 +36,8 @@ contract VoiceMaskAlpha is IVoiceMaskAlpha, ERC721A, ERC721AQueryable, ERC721ABu
         return _mintTo(to, quantity);
     }
 
-    function burn(uint256 alphaId) public override onlyMinter {
+    function burn(uint256 alphaId) public override {
+        require(ownerOf(alphaId) == msg.sender , 'Sender do not own it');
         _burn(alphaId);
         emit AlphaBurned(alphaId);
     }

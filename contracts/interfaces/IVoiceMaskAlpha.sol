@@ -3,8 +3,9 @@ pragma solidity ^0.8.16;
 
 // import { IERC721 } from '@openzeppelin/contracts/token/ERC721/IERC721.sol';
 import {IERC721AQueryable} from "erc721a/contracts/extensions/IERC721AQueryable.sol";
+import {IERC721ABurnable} from "erc721a/contracts/extensions/IERC721ABurnable.sol";
 
-interface IVoiceMaskAlpha {
+interface IVoiceMaskAlpha is IERC721ABurnable{
     event AlphaCreated(uint256 indexed tokenId, address to);
 
     event AlphaBurned(uint256 indexed tokenId);
@@ -14,6 +15,8 @@ interface IVoiceMaskAlpha {
     function mintAuction() external returns (uint256);
 
     function mintTeam(address to, uint256 quantity) external returns (uint256);
+
+    function burn(uint256 alphaId) external;
 
     function setMinter(address _minter) external;
 
