@@ -1,277 +1,226 @@
-// // contracts/Box.sol
-// // SPDX-License-Identifier: MIT
-// pragma solidity ^0.8.16;
-// import "hardhat/console.sol";
-// // import { PausableUpgradeable } from '@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol';
-// // import { ReentrancyGuardUpgradeable } from '@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol';
-// // import { OwnableUpgradeable } from '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.16;
+import "hardhat/console.sol";
+// import { PausableUpgradeable } from '@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol';
+// import { ReentrancyGuardUpgradeable } from '@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol';
+// import { OwnableUpgradeable } from '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
 
-// import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-// import {Pausable} from "@openzeppelin/contracts/security/Pausable.sol";
-// import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import {Pausable} from "@openzeppelin/contracts/security/Pausable.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IVMAAuction} from "./interfaces/IVMAAuction.sol";
+import {IVoiceMaskAlpha} from "./interfaces/IVoiceMaskAlpha.sol";
 
-// import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-// // import {INounsAuctionHouse} from "./interfaces/INounsAuctionHouse.sol";
-// import {IVMAToken} from "./interfaces/IVMAToken.sol";
+contract VMAAuction is IVMAAuction, Pausable, ReentrancyGuard, Ownable {
+    IVoiceMaskAlpha public voiceMaskAlpha;
 
+    uint256 public timeBuffer;
 
-// // contract NounsAuctionHouse is INounsAuctionHouse, PausableUpgradeable, ReentrancyGuardUpgradeable, OwnableUpgradeable {
-// contract VMAAuction is
-//     INounsAuctionHouse,
-//     Pausable,
-//     ReentrancyGuard,
-//     Ownable
-// {
-//     // The Nouns ERC721 token contract
-//     IVMAToken public voiceMaskAlpha;
+    uint256 public reservePrice;
 
-//     // The address of the WETH contract
-//     // address public weth;
+    uint256 public duration;
 
-//     // The minimum amount of time left in an auction after a new bid is created
-//     uint256 public timeBuffer;
+    uint8 public minBidIncrementPercentage;
 
-//     // The minimum price accepted in an auction
-//     uint256 public reservePrice;
+    IVMAAuction.Auction public auction;
 
-//     // The minimum percentage difference between the last bid amount and the current bid
-//     uint8 public minBidIncrementPercentage;
+    constructor(
+        IVoiceMaskAlpha _alpha, //alpha nft
+        uint256 _timeBuffer, //새 입찰 생성되고 옥션에 남은 최소 시간 줌. 300 = 5분
+        uint256 _reservePrice, //최저가 1 => 0만 아니면됨
+        uint256 _duration, //하나의 옥션이 몇분동안 진행되는지 86400 = 1일
+        uint8 _minBidIncrementPercentage //비드 증감율
+    ) {
+        _pause();
 
-//     // The duration of a single auction
-//     uint256 public duration;
+        voiceMaskAlpha = _alpha;
+        timeBuffer = _timeBuffer;
+        reservePrice = _reservePrice;
+        duration = _duration;
+        minBidIncrementPercentage = _minBidIncrementPercentage;
+    }
 
-//     // The active auction
-//     INounsAuctionHouse.Auction public auction;
+    function settleCurrentAndCreateNewAuction()
+        external
+        override
+        nonReentrant
+        whenNotPaused
+    {
+        _settleAuction();
+        _createAuction();
+    }
 
-//     /**
-//      * @notice Initialize the auction house and base contracts,
-//      * populate configuration values, and pause the contract.
-//      * @dev This function can only be called once.
-//      */
-//     constructor(
-//         IVMAToken _nouns,
-//         // address _weth, //WETH 컨트랙트 주소
-//         uint256 _timeBuffer, //새 입찰 생성되고 옥션에 남은 최소 시간 줌. 300 = 5분
-//         uint256 _reservePrice, //최저가 1 => 0만 아니면됨
-//         uint8 _minBidIncrementPercentage, //비드 증감율
-//         uint256 _duration //하나의 옥션이 몇분동안 진행되는지 86400 = 1일
-//     ) {
-//         // __Pausable_init();
-//         // __ReentrancyGuard_init();
-//         // __Ownable_init();
+    /**
+     * Settle the current auction.
+     * This function can be called when the contract is paused.
+     */
+    function settleAuction() external override whenPaused nonReentrant {
+        _settleAuction();
+    }
 
-//         _pause();
+    /**
+     * Create a bid for an Alpha, with a given value.
+     */
+    function createBid(uint256 alphaId) external payable override nonReentrant {
+        IVMAAuction.Auction memory _auction = auction;
 
-//         voiceMaskAlpha = _nouns;
-//         // weth = _weth;
-//         timeBuffer = _timeBuffer;
-//         reservePrice = _reservePrice;
-//         minBidIncrementPercentage = _minBidIncrementPercentage;
-//         duration = _duration;
-//     }
+        require(block.timestamp < _auction.endTime, "Auction is expired");
+        require(_auction.alphaId == alphaId, "Not for this auction");
+        require(msg.value >= reservePrice, "Send at least reservePrice");
+        require(
+            msg.value >=
+                _auction.price +
+                    ((_auction.price * minBidIncrementPercentage) / 100),
+            "Increase the bid by minBidIncrementPercentage"
+        );
 
-//     /**
-//      * @notice Settle the current auction, mint a new Noun, and put it up for auction.
-//      */
-//     function settleCurrentAndCreateNewAuction()
-//         external
-//         override
-//         nonReentrant
-//         whenNotPaused
-//     {
-//         _settleAuction();
-//         _createAuction();
-//     }
+        address payable lastBidder = _auction.bidder;
 
-//     /**
-//      * @notice Settle the current auction.
-//      * @dev This function can only be called when the contract is paused.
-//      */
-//     function settleAuction() external override whenPaused nonReentrant {
-//         _settleAuction();
-//     }
+        // Refund the last bidder
+        if (lastBidder != address(0)) {
+            _transferEtH(lastBidder, _auction.price);
+        }
 
-//     /**
-//      * @notice Create a bid for a Noun, with a given amount.
-//      * @dev This contract only accepts payment in ETH.
-//      */
-//     function createBid(uint256 nounId) external payable override nonReentrant {
-//         INounsAuctionHouse.Auction memory _auction = auction;
+        //set state
+        auction.price = msg.value;
+        auction.bidder = payable(msg.sender);
 
-//         require(_auction.nounId == nounId, "Noun not up for auction");
-//         require(block.timestamp < _auction.endTime, "Auction expired");
-//         require(msg.value >= reservePrice, "Must send at least reservePrice");
-//         require(
-//             msg.value >=
-//                 _auction.amount +
-//                     ((_auction.amount * minBidIncrementPercentage) / 100),
-//             "Must send more than last bid by minBidIncrementPercentage amount"
-//         );
+        // Extend the auction if bidded within timeBuffer time before the auction ends.
+        bool extended = _auction.endTime - block.timestamp < timeBuffer;
+        if (extended) {
+            auction.endTime = _auction.endTime = block.timestamp + timeBuffer;
+        }
 
-//         address payable lastBidder = _auction.bidder;
+        emit AuctionBid(_auction.alphaId, msg.sender, msg.value, extended);
 
-//         // Refund the last bidder, if applicable
-//         if (lastBidder != address(0)) {
-//             _safeTransferETHWithFallback(lastBidder, _auction.amount);
-//         }
+        if (extended) {
+            emit AuctionExtended(_auction.alphaId, _auction.endTime);
+        }
+    }
 
-//         auction.amount = msg.value;
-//         auction.bidder = payable(msg.sender);
+    function pause() external override onlyOwner {
+        _pause();
+    }
 
-//         // Extend the auction if the bid was received within `timeBuffer` of the auction end time
-//         bool extended = _auction.endTime - block.timestamp < timeBuffer;
-//         if (extended) {
-//             auction.endTime = _auction.endTime = block.timestamp + timeBuffer;
-//         }
+    /**
+     * Unpause the auction.
+     * If there is no active auction, this function will start a new auction.
+     */
+    function unpause() external override onlyOwner {
+        _unpause();
 
-//         emit AuctionBid(_auction.nounId, msg.sender, msg.value, extended);
+        if (auction.startTime == 0 || auction.settled) {
+            _createAuction();
+        }
+    }
 
-//         if (extended) {
-//             emit AuctionExtended(_auction.nounId, _auction.endTime);
-//         }
-//     }
+    function setTimeBuffer(uint256 _timeBuffer) external override onlyOwner {
+        timeBuffer = _timeBuffer;
 
-//     /**
-//      * @notice Pause the Nouns auction house.
-//      * @dev This function can only be called by the owner when the
-//      * contract is unpaused. While no new auctions can be started when paused,
-//      * anyone can settle an ongoing auction.
-//      */
-//     function pause() external override onlyOwner {
-//         _pause();
-//     }
+        emit AuctionTimeBufferUpdated(_timeBuffer);
+    }
 
-//     /**
-//      * @notice Unpause the Nouns auction house.
-//      * @dev This function can only be called by the owner when the
-//      * contract is paused. If required, this function will start a new auction.
-//      */
-//     function unpause() external override onlyOwner {
-//         _unpause();
+    function setReservePrice(uint256 _reservePrice)
+        external
+        override
+        onlyOwner
+    {
+        reservePrice = _reservePrice;
 
-//         if (auction.startTime == 0 || auction.settled) {
-//             _createAuction();
-//         }
-//     }
+        emit AuctionReservePriceUpdated(_reservePrice);
+    }
 
-//     /**
-//      * @notice Set the auction time buffer.
-//      * @dev Only callable by the owner.
-//      */
-//     function setTimeBuffer(uint256 _timeBuffer) external override onlyOwner {
-//         timeBuffer = _timeBuffer;
+    function setMinBidIncrementPercentage(uint8 _minBidIncrementPercentage)
+        external
+        override
+        onlyOwner
+    {
+        minBidIncrementPercentage = _minBidIncrementPercentage;
 
-//         emit AuctionTimeBufferUpdated(_timeBuffer);
-//     }
+        emit AuctionMinBidIncrementPercentageUpdated(
+            _minBidIncrementPercentage
+        );
+    }
 
-//     /**
-//      * @notice Set the auction reserve price.
-//      * @dev Only callable by the owner.
-//      */
-//     function setReservePrice(uint256 _reservePrice)
-//         external
-//         override
-//         onlyOwner
-//     {
-//         reservePrice = _reservePrice;
+    /**
+     * Create an auction.
+     * Store the auction details in the auction state variable.
+     * If the mint reverts, the minter was updated without pausing this contract first. To remedy this,
+     * catch the revert and pause this contract.
+     */
+    function _createAuction() internal {
+        try voiceMaskAlpha.mintAuction() returns (uint256 alphaId) {
+            uint256 startTime = block.timestamp;
+            uint256 endTime = startTime + duration;
 
-//         emit AuctionReservePriceUpdated(_reservePrice);
-//     }
+            auction = Auction({
+                alphaId: alphaId,
+                price: 0, //입찰가
+                startTime: startTime,
+                endTime: endTime,
+                bidder: payable(0),
+                settled: false
+            });
 
-//     /**
-//      * @notice Set the auction minimum bid increment percentage.
-//      * @dev Only callable by the owner.
-//      */
-//     function setMinBidIncrementPercentage(uint8 _minBidIncrementPercentage)
-//         external
-//         override
-//         onlyOwner
-//     {
-//         minBidIncrementPercentage = _minBidIncrementPercentage;
+            emit AuctionCreated(alphaId, startTime, endTime);
+        } catch Error(string memory error) {
+            // console.log(error);
+            _pause();
+            // emit AuctionCreateFailed(error);
+        }
+    }
 
-//         emit AuctionMinBidIncrementPercentageUpdated(
-//             _minBidIncrementPercentage
-//         );
-//     }
+    /**
+     *  Settle an auction. Finish the bid and payment.
+     *  If there is no bid the Alpha NFT is burned.
+     */
+    function _settleAuction() internal {
+        IVMAAuction.Auction memory _auction = auction;
 
-//     /**
-//      * @notice Create an auction.
-//      * @dev Store the auction details in the `auction` state variable and emit an AuctionCreated event.
-//      * If the mint reverts, the minter was updated without pausing this contract first. To remedy this,
-//      * catch the revert and pause this contract.
-//      */
-//     function _createAuction() internal {
-        
-//         try voiceMaskAlpha.mint() returns (uint256 nounId) {
-//             uint256 startTime = block.timestamp;
-//             uint256 endTime = startTime + duration;
+        require(!_auction.settled, "Auction is settled already");
+        require(_auction.startTime != 0, "Auction didn't start yet");
+        require(block.timestamp >= _auction.endTime, "Auction is active");
 
-//             auction = Auction({
-//                 nounId: nounId,
-//                 amount: 0, //입찰가
-//                 startTime: startTime,
-//                 endTime: endTime,
-//                 bidder: payable(0),
-//                 settled: false
-//             });
+        auction.settled = true;
 
-//             // emit AuctionCreated(nounId, startTime, endTime);
-//         } catch Error(string memory error) {
-//             console.log(error);
-//             _pause();
-//         }
-//     }
+        if (_auction.bidder == address(0)) {
+            voiceMaskAlpha.burn(_auction.alphaId);
+        } else {
+            voiceMaskAlpha.transferFrom(
+                address(this),
+                _auction.bidder,
+                _auction.alphaId
+            );
+        }
 
-//     /**
-//      * @notice Settle an auction, finalizing the bid and paying out to the owner.
-//      * @dev If there are no bids, the Noun is burned.
-//      */
-//     function _settleAuction() internal {
-//         INounsAuctionHouse.Auction memory _auction = auction;
+        if (_auction.price > 0) {
+            //send money to the owner EOA
+            _transferEtH(owner(), _auction.price);
+        }
 
-//         require(_auction.startTime != 0, "Auction hasn't begun");
-//         require(!_auction.settled, "Auction has already been settled");
-//         require(
-//             block.timestamp >= _auction.endTime,
-//             "Auction hasn't completed"
-//         );
+        emit AuctionSettled(_auction.alphaId, _auction.bidder, _auction.price);
+    }
 
-//         auction.settled = true;
+    /**
+     * Transfer ETH.
+     */
+    function _transferEtH(address to, uint256 amount) internal {
+        if (!_safeTransferETH(to, amount)) {
+            //리펀 실패시
+            emit AuctionRefundFailed(to, amount);
+        }
+    }
 
-//         if (_auction.bidder == address(0)) {
-//             voiceMaskAlpha.burn(_auction.nounId);
-//         } else {
-//             voiceMaskAlpha.transferFrom(address(this), _auction.bidder, _auction.nounId);
-//         }
-
-//         if (_auction.amount > 0) {
-//             _safeTransferETHWithFallback(owner(), _auction.amount); //컨트랙트말고 eoa 에 돈 보냄
-//         }
-
-//         emit AuctionSettled(_auction.nounId, _auction.bidder, _auction.amount);
-//     }
-
-//     /**
-//      * @notice Transfer ETH. If the ETH transfer fails, wrap the ETH and try send it as WETH.
-//      */
-//     function _safeTransferETHWithFallback(address to, uint256 amount) internal {
-//         // if (!_safeTransferETH(to, amount)) { //리펀 실패시
-//         // //weth 로 랩해서 IERC20로 전송 재시도
-//         //     IWETH(weth).deposit{ value: amount }();
-//         //     IERC20(weth).transfer(to, amount);
-//         // }
-//         require(_safeTransferETH(to, amount), "refundFailed");
-//     }
-
-//     /**
-//      * @notice Transfer ETH and return the success status.
-//      * @dev This function only forwards 30,000 gas to the callee.
-//      */
-//     function _safeTransferETH(address to, uint256 value)
-//         internal
-//         returns (bool)
-//     {
-//         (bool success, ) = to.call{value: value, gas: 30_000}(new bytes(0));
-//         return success;
-//     }
-// }
+    /**
+     * Transfer ETH and return the success status.
+     * This function only forwards 30,000 gas to the callee.
+     */
+    function _safeTransferETH(address to, uint256 value)
+        internal
+        returns (bool)
+    {
+        (bool success, ) = to.call{value: value, gas: 30000}(new bytes(0));
+        return success;
+    }
+}
