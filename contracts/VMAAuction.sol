@@ -59,7 +59,7 @@ contract VMAAuction is IVMAAuction, Pausable, ReentrancyGuard, Ownable {
     /**
      * Create a bid for an Alpha, with a given value.
      */
-    function createBid(uint256 alphaId) external payable override nonReentrant {
+    function createBid(uint256 alphaId) external payable override whenNotPaused nonReentrant {
         IVMAAuction.Auction memory _auction = auction;
 
         require(block.timestamp < _auction.endTime, "Auction is expired");
@@ -79,7 +79,6 @@ contract VMAAuction is IVMAAuction, Pausable, ReentrancyGuard, Ownable {
             _transferEtH(lastBidder, _auction.price);
         }
 
-        //set state
         auction.price = msg.value;
         auction.bidder = payable(msg.sender);
 
@@ -96,6 +95,11 @@ contract VMAAuction is IVMAAuction, Pausable, ReentrancyGuard, Ownable {
         }
     }
 
+    /**
+     * Pause the auction.
+     * CreateBid is unactivated by this function.
+     * The auction can be settled by anyone after the endtime has passed.
+     */ 
     function pause() external override onlyOwner {
         _pause();
     }
@@ -161,11 +165,11 @@ contract VMAAuction is IVMAAuction, Pausable, ReentrancyGuard, Ownable {
                 settled: false
             });
 
-        //     emit AuctionCreated(alphaId, startTime, endTime);
+            emit AuctionCreated(alphaId, startTime, endTime);
         } catch Error(string memory error) {
-            console.log(error);
+            // console.log(error);
             _pause();
-            // emit AuctionCreateFailed(error);
+            emit AuctionCreateFailed(error);
         }
     }
 
@@ -176,9 +180,9 @@ contract VMAAuction is IVMAAuction, Pausable, ReentrancyGuard, Ownable {
     function _settleAuction() internal {
         IVMAAuction.Auction memory _auction = auction;
 
+        require(block.timestamp >= _auction.endTime, "Auction is active");
         require(!_auction.settled, "Auction is settled already");
         require(_auction.startTime != 0, "Auction didn't start yet");
-        require(block.timestamp >= _auction.endTime, "Auction is active");
 
         auction.settled = true;
 

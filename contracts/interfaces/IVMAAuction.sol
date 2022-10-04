@@ -6,7 +6,7 @@ pragma solidity ^0.8.16;
 interface IVMAAuction {
     struct Auction {
         uint256 alphaId;
-        uint256 price;// The current highest bid price
+        uint256 price;// currently the highest bid price
         uint256 startTime;
         uint256 endTime;
         address payable bidder;
