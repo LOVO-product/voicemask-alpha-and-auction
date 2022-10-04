@@ -6,7 +6,11 @@
     "deploy:mainnet": "npx hardhat run scripts/deploy.ts --network mainnet",
     "verify:goerli": "npx hardhat verify --network goerli",
     "verify:mainnet": "npx hardhat verify --network mainnet",
-    "initialSetting:goerli": "npx hardhat run scripts/alpha_initial.ts --network goerli"
+    "1:goerli": "npx hardhat run scripts/1_alpha_deploy.ts --network goerli",
+    "2:goerli": "npx hardhat run scripts/2_alpha_settings.ts --network goerli",
+    "3:goerli": "npx hardhat run scripts/3_auction_deploy.ts --network goerli",
+    "4:goerli": "npx hardhat run scripts/4_auction_settings.ts --network goerli",
+    "aRun": "npx hardhat run scripts/auction/auction_run.ts --network goerli"
   },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.6",

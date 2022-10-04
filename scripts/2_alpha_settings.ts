@@ -5,10 +5,9 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-wit
 
 async function main() {
     let owner: SignerWithAddress;
-    let minter: SignerWithAddress;
-    [owner, minter] = await ethers.getSigners();
+    [owner] = await ethers.getSigners();
 
-    const deployAddress = "0x48Fb09817Ee2D47b997392829D45DAaE78c3e9FB"//GOERLI
+    const deployAddress = "0x6A19Fff6906C68E84e12a03388c8E0794c380102"//GOERLI
     const baseUri = "https://ipfs.io/ipfs/QmPMc4tcBsMqLRuCQtPmPe84bpSjrC3Ky7t3JWuHXYB4aS/";
 
     const VoiceMaskAlpha = await ethers.getContractFactory("VoiceMaskAlpha");
@@ -18,8 +17,6 @@ async function main() {
 
     //베이스 uri 세팅
     await voiceMaskAlpha.connect(owner).setBaseURI(baseUri);
-    //민터 세팅
-    await voiceMaskAlpha.connect(owner).setMinter(minter.address);
 }
 
 main()
