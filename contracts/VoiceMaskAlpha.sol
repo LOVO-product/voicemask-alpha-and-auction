@@ -33,13 +33,13 @@ contract VoiceMaskAlpha is IVoiceMaskAlpha, ERC721A, ERC721AQueryable, Ownable {
         onlyOwner
         returns (uint256)
     {
-        require(teamCount + quantity <= teamSupply, "Team supply sold out");
+        require(teamCount + quantity <= teamSupply, "Team supply all sold out");
         teamCount++;
         return _mintTo(to, quantity);
     }
 
     function burn(uint256 alphaId) public override {
-        require(ownerOf(alphaId) == msg.sender , 'Sender do not own it');
+        require(ownerOf(alphaId) == msg.sender , 'Sender does not own it');
         _burn(alphaId);
         emit AlphaBurned(alphaId);
     }
