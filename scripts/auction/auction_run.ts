@@ -1,15 +1,20 @@
 import { ethers } from "ethers";
+import * as dotenv from 'dotenv';
+dotenv.config()
 
+let PRIVATE_KEY = process.env.PRIVATE_KEY as string;
+let PRIVATE_KEY2 = process.env.PRIVATE_KEY2 as string;
 
-let PRIVATE_KEY = "0x4dfc9e11b48940aef89baf6a525fa7840caffd1cd3a2ccf6ec0cff78f8898ebe";
 const alchemyProvider = new ethers.providers.AlchemyProvider("goerli", "QSuGf9zqKJy_SxE6yKOwA1mMjzSw0m8B");
-let walletWithProvider = new ethers.Wallet(PRIVATE_KEY, alchemyProvider);
+let walletWithProvider = new ethers.Wallet(PRIVATE_KEY2, alchemyProvider);
 
 const CONTRACT_ADDRESS = "0x54195c61528D4DC90Ae3dd943754ed3E63B60363";
 
 let abi = [
     "function auction() view external returns(uint256 alphaId, uint256 price, uint256 startTime, uint256 endTime, address payable bidder,bool settled)",
-    "function settleCurrentAndCreateNewAuction() external"
+    "function settleCurrentAndCreateNewAuction() external",
+    "function createBid(uint256 alphaId) external payable"
+
 ];
 
 const vMAAuction_contract = new ethers.Contract(CONTRACT_ADDRESS, abi, walletWithProvider);
@@ -17,12 +22,17 @@ const vMAAuction_contract = new ethers.Contract(CONTRACT_ADDRESS, abi, walletWit
 async function main() {
 
     
-    const auctionInfo = await vMAAuction_contract.auction();
-    console.log("The auctionInfo is: " + auctionInfo);
+    // const auctionInfo = await vMAAuction_contract.auction();
+    // console.log("The auctionInfo is: " + auctionInfo);
 
     // const message = await vMAAuction_contract.settleCurrentAndCreateNewAuction();
     // console.log("The message is: " + JSON.stringify(message));
 
+
+    ///비드
+    const options = {value: ethers.utils.parseEther("1.3")}
+    const message = await vMAAuction_contract.createBid(3, options);
+    console.log("The message is: " + JSON.stringify(message));
 }
 
 main()
