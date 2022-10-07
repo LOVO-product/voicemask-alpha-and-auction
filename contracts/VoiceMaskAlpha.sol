@@ -14,8 +14,8 @@ contract VoiceMaskAlpha is IVoiceMaskAlpha, ERC721A, ERC721AQueryable, Ownable {
 
     address public minter;
     string private baseURI;
-    uint256 public maxSupply = 50;
-    uint256 public teamSupply = 10;
+    uint256 public maxSupply = 200;
+    uint256 public teamSupply = 40;
     uint256 public teamCount = 0;
 
     modifier onlyMinter() {
@@ -23,7 +23,7 @@ contract VoiceMaskAlpha is IVoiceMaskAlpha, ERC721A, ERC721AQueryable, Ownable {
         _;
     }
 
-    function mintAuction() external onlyMinter returns (uint256) { //
+    function mintAuction() external onlyMinter returns (uint256) { 
 
         return _mintTo(msg.sender, 1);
     }

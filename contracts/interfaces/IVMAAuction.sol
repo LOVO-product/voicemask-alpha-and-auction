@@ -21,7 +21,7 @@ interface IVMAAuction {
 
     event AuctionCreateFailed(string error);
 
-    event AuctionRefundFailed(address winner, uint256 amount);
+    event AuctionRefundFailed(address indexed winner, uint256 amount);
 
     event AuctionSettled(uint256 indexed alphaId, address winner, uint256 amount);
 
