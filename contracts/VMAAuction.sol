@@ -1,6 +1,13 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: GPL-3.0
+
+// LICENSE
+// VMAAuction.sol is a modified version of Nouns' NounsAuctionHouse.sol:
+// https://github.com/nounsDAO/nouns-monorepo/blob/master/packages/nouns-contracts/contracts/NounsAuctionHouse.sol
+//
+// VMAAuction.sol source code Copyright Nouns licensed under the GPL-3.0 license.
+// With modifications by Nounders DAO.
+
 pragma solidity ^0.8.16;
-import "hardhat/console.sol";
 
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import {Pausable} from "@openzeppelin/contracts/security/Pausable.sol";
@@ -20,6 +27,7 @@ contract VMAAuction is IVMAAuction, Pausable, ReentrancyGuard, Ownable {
 
     uint8 public minBidIncrementPercentage;
 
+
     IVMAAuction.Auction public auction;
 
     constructor(
@@ -27,7 +35,8 @@ contract VMAAuction is IVMAAuction, Pausable, ReentrancyGuard, Ownable {
         uint256 _timeBuffer, //새 입찰 생성되고 옥션에 남은 최소 시간 줌. 300 = 5분
         uint256 _reservePrice, //최저가 1 => 0만 아니면됨
         uint256 _duration, //하나의 옥션이 몇분동안 진행되는지 86400 = 1일
-        uint8 _minBidIncrementPercentage //비드 증감율
+        uint8 _minBidIncrementPercentage //비드 증감율 현재 2퍼센트
+    
     ) {
         _pause();
 
@@ -36,6 +45,7 @@ contract VMAAuction is IVMAAuction, Pausable, ReentrancyGuard, Ownable {
         reservePrice = _reservePrice;
         duration = _duration;
         minBidIncrementPercentage = _minBidIncrementPercentage;
+
     }
 
     function settleCurrentAndCreateNewAuction()
@@ -59,7 +69,13 @@ contract VMAAuction is IVMAAuction, Pausable, ReentrancyGuard, Ownable {
     /**
      * Create a bid for an Alpha, with a given value.
      */
-    function createBid(uint256 alphaId) external payable override whenNotPaused nonReentrant {
+    function createBid(uint256 alphaId)
+        external
+        payable
+        override
+        whenNotPaused
+        nonReentrant
+    {
         IVMAAuction.Auction memory _auction = auction;
 
         require(block.timestamp < _auction.endTime, "Auction is expired");
@@ -99,7 +115,7 @@ contract VMAAuction is IVMAAuction, Pausable, ReentrancyGuard, Ownable {
      * Pause the auction.
      * CreateBid is unactivated by this function.
      * The auction can be settled by anyone after the endtime has passed.
-     */ 
+     */
     function pause() external override onlyOwner {
         _pause();
     }
@@ -152,7 +168,6 @@ contract VMAAuction is IVMAAuction, Pausable, ReentrancyGuard, Ownable {
      */
     function _createAuction() internal {
         try voiceMaskAlpha.mintAuction() returns (uint256 alphaId) {
-            
             uint256 startTime = block.timestamp;
             uint256 endTime = startTime + duration;
 
@@ -167,7 +182,6 @@ contract VMAAuction is IVMAAuction, Pausable, ReentrancyGuard, Ownable {
 
             emit AuctionCreated(alphaId, startTime, endTime);
         } catch Error(string memory error) {
-            // console.log(error);
             _pause();
             emit AuctionCreateFailed(error);
         }
@@ -186,8 +200,12 @@ contract VMAAuction is IVMAAuction, Pausable, ReentrancyGuard, Ownable {
 
         auction.settled = true;
 
-        if (_auction.bidder == address(0)) {
-            voiceMaskAlpha.burn(_auction.alphaId);
+        if (_auction.bidder == address(0)) { // No one made a bid
+            voiceMaskAlpha.transferFrom(
+                address(this),
+                owner(),
+                _auction.alphaId
+            );
         } else {
             voiceMaskAlpha.transferFrom(
                 address(this),
@@ -209,7 +227,6 @@ contract VMAAuction is IVMAAuction, Pausable, ReentrancyGuard, Ownable {
      */
     function _transferEtH(address to, uint256 amount) internal {
         if (!_safeTransferETH(to, amount)) {
-            //리펀 실패시
             emit AuctionRefundFailed(to, amount);
         }
     }

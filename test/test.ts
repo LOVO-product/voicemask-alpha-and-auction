@@ -106,6 +106,20 @@ describe("Alpha + Auction", function () {
 
     });
 
+    it("Should success 3rd auction", async function () {
+      await this.vMAAuction.connect(owner).unpause();
+
+      let res = await this.vMAAuction.connect(owner).auction();
+      //res.alphaId
+      await ethers.provider.send("evm_increaseTime", [301]);
+
+
+      await this.vMAAuction.connect(owner).settleCurrentAndCreateNewAuction();
+
+      expect(await this.vmAlpha.ownerOf(res.alphaId)).equals(owner.address);
+
+    });
+
   });
 
 
