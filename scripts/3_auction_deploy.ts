@@ -1,7 +1,7 @@
 import { ethers } from "hardhat";
 
 async function main() {
-  const Alpha_addr = "0xDb7AD04e69c88a42A084461656E69b8bb1FA8276"; //TODO
+  const Alpha_addr = "0xca840FE0574A1D1BfB1C34c740060fD70A3d4Af6"; //TODO
 
   const VMAAuction = await ethers.getContractFactory("VMAAuction");
   console.log("Deploying...");
