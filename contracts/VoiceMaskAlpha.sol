@@ -1,12 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.16;
-import "hardhat/console.sol";
 
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {IVoiceMaskAlpha} from "./interfaces/IVoiceMaskAlpha.sol";
 import {ERC721A} from "erc721a/contracts/ERC721A.sol";
 import {ERC721AQueryable} from "erc721a/contracts/extensions/ERC721AQueryable.sol";
-// import {ERC721ABurnable} from "erc721a/contracts/extensions/ERC721ABurnable.sol";
 
 contract VoiceMaskAlpha is IVoiceMaskAlpha, ERC721A, ERC721AQueryable, Ownable {
     
@@ -15,7 +13,7 @@ contract VoiceMaskAlpha is IVoiceMaskAlpha, ERC721A, ERC721AQueryable, Ownable {
     address public minter;
     string private baseURI;
     uint256 public maxSupply = 200;
-    uint256 public teamSupply = 40;
+    uint256 public teamSupply = 50;
     uint256 public teamCount = 0;
 
     modifier onlyMinter() {
@@ -39,7 +37,7 @@ contract VoiceMaskAlpha is IVoiceMaskAlpha, ERC721A, ERC721AQueryable, Ownable {
     }
 
     function burn(uint256 alphaId) public override {
-        require(ownerOf(alphaId) == msg.sender , 'Sender does not own it');
+        require(ownerOf(alphaId) == msg.sender , "Sender does not own it");
         _burn(alphaId);
         emit AlphaBurned(alphaId);
     }
