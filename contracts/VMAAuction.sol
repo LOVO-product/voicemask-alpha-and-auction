@@ -89,6 +89,7 @@ contract VMAAuction is IVMAAuction, Pausable, ReentrancyGuard, Ownable {
         );
 
         address payable lastBidder = _auction.bidder;
+        require(msg.sender != lastBidder, "Wait for next turn");
 
         // Refund the last bidder
         if (lastBidder != address(0)) {
