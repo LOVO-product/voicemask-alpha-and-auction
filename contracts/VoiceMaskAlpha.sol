@@ -7,7 +7,6 @@ import {ERC721A} from "erc721a/contracts/ERC721A.sol";
 import {ERC721AQueryable} from "erc721a/contracts/extensions/ERC721AQueryable.sol";
 
 contract VoiceMaskAlpha is IVoiceMaskAlpha, ERC721A, ERC721AQueryable, Ownable {
-    
     constructor() ERC721A("Voice Mask Alpha", "VMA") {}
 
     address public minter;
@@ -21,7 +20,8 @@ contract VoiceMaskAlpha is IVoiceMaskAlpha, ERC721A, ERC721AQueryable, Ownable {
         _;
     }
 
-    function mintAuction() external onlyMinter returns (uint256) { 
+    function mintAuction() external onlyMinter returns (uint256) {
+        require(_nextTokenId() <= maxSupply, "All sold out");
 
         return _mintTo(msg.sender, 1);
     }
@@ -32,12 +32,14 @@ contract VoiceMaskAlpha is IVoiceMaskAlpha, ERC721A, ERC721AQueryable, Ownable {
         returns (uint256)
     {
         require(teamCount + quantity <= teamSupply, "Team supply all sold out");
+        require(_nextTokenId() <= maxSupply, "All sold out");
+
         teamCount++;
         return _mintTo(to, quantity);
     }
 
     function burn(uint256 alphaId) public override {
-        require(ownerOf(alphaId) == msg.sender , "Sender does not own it");
+        require(ownerOf(alphaId) == msg.sender, "Sender does not own it");
         _burn(alphaId);
         emit AlphaBurned(alphaId);
     }
@@ -69,6 +71,6 @@ contract VoiceMaskAlpha is IVoiceMaskAlpha, ERC721A, ERC721AQueryable, Ownable {
         _mint(to, quantity);
         emit AlphaCreated(_totalMinted(), to);
 
-        return _nextTokenId()-1;
+        return _nextTokenId() - 1;
     }
 }
