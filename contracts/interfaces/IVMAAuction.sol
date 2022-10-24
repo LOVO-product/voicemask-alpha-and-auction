@@ -31,6 +31,9 @@ interface IVMAAuction {
 
     event AuctionMinBidIncrementPercentageUpdated(uint256 minBidIncrementPercentage);
 
+    event AuctionGasUpdated(uint256 gas);
+
+
     function settleAuction() external;
 
     function settleCurrentAndCreateNewAuction() external;

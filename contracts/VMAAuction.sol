@@ -24,6 +24,8 @@ contract VMAAuction is IVMAAuction, Pausable, ReentrancyGuard, Ownable {
     uint256 public reservePrice;
 
     uint256 public duration;
+    
+    uint256 public gas;
 
     uint8 public minBidIncrementPercentage;
 
@@ -45,6 +47,7 @@ contract VMAAuction is IVMAAuction, Pausable, ReentrancyGuard, Ownable {
         reservePrice = _reservePrice;
         duration = _duration;
         minBidIncrementPercentage = _minBidIncrementPercentage;
+        gas = 30000;
 
     }
 
@@ -161,6 +164,13 @@ contract VMAAuction is IVMAAuction, Pausable, ReentrancyGuard, Ownable {
         );
     }
 
+     function setGas(uint256 _gas) external onlyOwner {
+        require(_gas >= 21000, "Gas is not enough");
+        
+        gas = _gas;
+        emit AuctionGasUpdated(gas);
+    }
+
     /**
      * Create an auction.
      * Store the auction details in the auction state variable.
@@ -239,7 +249,7 @@ contract VMAAuction is IVMAAuction, Pausable, ReentrancyGuard, Ownable {
         internal
         returns (bool)
     {
-        (bool success, ) = to.call{value: value, gas: 30000}(new bytes(0));
+        (bool success, ) = to.call{value: value, gas: gas}(new bytes(0));
         return success;
     }
 }
