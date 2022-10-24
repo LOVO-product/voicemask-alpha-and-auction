@@ -165,9 +165,9 @@ contract VMAAuction is IVMAAuction, Pausable, ReentrancyGuard, Ownable {
     }
 
      function setGas(uint256 _gas) external onlyOwner {
-        require(_gas >= 21000, "Gas is not enough");
-        
+        require(_gas >= 21000, "Gas is not enough for transaction");
         gas = _gas;
+        
         emit AuctionGasUpdated(gas);
     }
 
@@ -243,7 +243,6 @@ contract VMAAuction is IVMAAuction, Pausable, ReentrancyGuard, Ownable {
 
     /**
      * Transfer ETH and return the success status.
-     * This function only forwards 30,000 gas to the callee.
      */
     function _safeTransferETH(address to, uint256 value)
         internal
