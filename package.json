@@ -2,16 +2,17 @@
   "name": "voice-mask",
   "scripts": {
     "test": "npx hardhat test",
-    "deploy:goerli": "npx hardhat run scripts/deploy.ts --network goerli",
     "deploy:mainnet": "npx hardhat run scripts/deploy.ts --network mainnet",
     "verify:goerli": "npx hardhat verify --network goerli",
     "verify:mainnet": "npx hardhat verify --network mainnet",
     "1:goerli": "npx hardhat run scripts/1_alpha_deploy.ts --network goerli",
-    "2:goerli": "npx hardhat run scripts/2_alpha_settings.ts --network goerli",
+    "2:goerli": "npx hardhat run scripts/2_1_alpha_settings.ts --network goerli",
+    "2_2:goerli": "npx hardhat run scripts/2_2_alpha_airdrop.ts --network goerli",
     "3:goerli": "npx hardhat run scripts/3_auction_deploy.ts --network goerli",
     "4:goerli": "npx hardhat run scripts/4_auction_settings.ts --network goerli",
     "aRun": "npx hardhat run scripts/auction/auction_run.ts --network goerli",
-    "aSearch": "npx hardhat run scripts/auction/auction_search.ts --network goerli"
+    "aSearch": "npx hardhat run scripts/auction/auction_search.ts --network goerli",
+    "csvtoJson": "npx hardhat run scripts/ops/csvToJsonFile.ts"
   },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.6",
@@ -35,6 +36,7 @@
     "@chainlink/contracts": "^0.4.1",
     "@openzeppelin/contracts": "^4.6.0",
     "@openzeppelin/hardhat-upgrades": "^1.19.0",
+    "csvtojson": "^2.0.10",
     "dotenv": "^16.0.3",
     "hardhat-gas-reporter": "^1.0.8"
   }
