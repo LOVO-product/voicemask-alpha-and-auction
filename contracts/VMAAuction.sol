@@ -164,8 +164,7 @@ contract VMAAuction is IVMAAuction, Pausable, ReentrancyGuard, Ownable {
     /**
      * Create an auction.
      * Store the auction details in the auction state variable.
-     * If the mint reverts, the minter was updated without pausing this contract first. To remedy this,
-     * catch the revert and pause this contract.
+     * If the mint reverts, the contract will be paused.
      */
     function _createAuction() internal {
         try voiceMaskAlpha.mintAuction() returns (uint256 alphaId) {
@@ -190,7 +189,7 @@ contract VMAAuction is IVMAAuction, Pausable, ReentrancyGuard, Ownable {
 
     /**
      *  Settle an auction. Finish the bid and payment.
-     *  If there is no bid the Alpha NFT is burned.
+     *  If there is no bid the Alpha NFT will be send to the owner's EOA.
      */
     function _settleAuction() internal {
         IVMAAuction.Auction memory _auction = auction;
