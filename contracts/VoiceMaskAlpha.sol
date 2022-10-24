@@ -8,7 +8,7 @@ import {ERC721AQueryable} from "erc721a/contracts/extensions/ERC721AQueryable.so
 
 contract VoiceMaskAlpha is IVoiceMaskAlpha, ERC721A, ERC721AQueryable, Ownable {
     
-    constructor() ERC721A("Alpha Voice Mask", "AVM") {}
+    constructor() ERC721A("Voice Mask Alpha", "VMA") {}
 
     address public minter;
     string private baseURI;
