@@ -10,3 +10,6 @@ artifacts
 
 .jsonAsset
 scripts/ops/*.csv
+package-lock.json
+jsonAsset/0
+jsonAsset/1
