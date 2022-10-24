@@ -24,11 +24,10 @@ contract VMAAuction is IVMAAuction, Pausable, ReentrancyGuard, Ownable {
     uint256 public reservePrice;
 
     uint256 public duration;
-    
+
     uint256 public gas;
 
     uint8 public minBidIncrementPercentage;
-
 
     IVMAAuction.Auction public auction;
 
@@ -36,9 +35,8 @@ contract VMAAuction is IVMAAuction, Pausable, ReentrancyGuard, Ownable {
         IVoiceMaskAlpha _alpha, //alpha nft
         uint256 _timeBuffer, //새 입찰 생성되고 옥션에 남은 최소 시간 줌. 300 = 5분
         uint256 _reservePrice, //최저가 1 => 0만 아니면됨
-        uint256 _duration, //하나의 옥션이 몇분동안 진행되는지 86400 = 1일
+        uint256 _duration, //하나의 옥션이 몇분동안 진행되는지 43200 = 12시간
         uint8 _minBidIncrementPercentage //비드 증감율 현재 2퍼센트
-    
     ) {
         _pause();
 
@@ -48,7 +46,6 @@ contract VMAAuction is IVMAAuction, Pausable, ReentrancyGuard, Ownable {
         duration = _duration;
         minBidIncrementPercentage = _minBidIncrementPercentage;
         gas = 30000;
-
     }
 
     function settleCurrentAndCreateNewAuction()
@@ -96,7 +93,7 @@ contract VMAAuction is IVMAAuction, Pausable, ReentrancyGuard, Ownable {
 
         // Refund the last bidder
         if (lastBidder != address(0)) {
-            _transferEtH(lastBidder, _auction.price);
+            _transferETH(lastBidder, _auction.price);
         }
 
         auction.price = msg.value;
@@ -164,10 +161,10 @@ contract VMAAuction is IVMAAuction, Pausable, ReentrancyGuard, Ownable {
         );
     }
 
-     function setGas(uint256 _gas) external onlyOwner {
+    function setGas(uint256 _gas) external onlyOwner {
         require(_gas >= 21000, "Gas is not enough for transaction");
         gas = _gas;
-        
+
         emit AuctionGasUpdated(gas);
     }
 
@@ -210,7 +207,8 @@ contract VMAAuction is IVMAAuction, Pausable, ReentrancyGuard, Ownable {
 
         auction.settled = true;
 
-        if (_auction.bidder == address(0)) { // No one made a bid
+        if (_auction.bidder == address(0)) {
+            // No one made a bid
             voiceMaskAlpha.transferFrom(
                 address(this),
                 owner(),
@@ -226,7 +224,7 @@ contract VMAAuction is IVMAAuction, Pausable, ReentrancyGuard, Ownable {
 
         if (_auction.price > 0) {
             //send money to the owner EOA
-            _transferEtH(owner(), _auction.price);
+            _transferETH(owner(), _auction.price);
         }
 
         emit AuctionSettled(_auction.alphaId, _auction.bidder, _auction.price);
@@ -235,7 +233,7 @@ contract VMAAuction is IVMAAuction, Pausable, ReentrancyGuard, Ownable {
     /**
      * Transfer ETH.
      */
-    function _transferEtH(address to, uint256 amount) internal {
+    function _transferETH(address to, uint256 amount) internal {
         if (!_safeTransferETH(to, amount)) {
             emit AuctionRefundFailed(to, amount);
         }
