@@ -20,7 +20,7 @@ interface IVoiceMaskAlpha is IERC721ABurnable{
 
     function setMinter(address _minter) external;
 
-    function setMaxSupply(uint256 _maxMint) external;
+    function setAuctionSupply(uint256 _maxMint) external;
 
     function setTeamSupply(uint256 _maxMint) external;
 

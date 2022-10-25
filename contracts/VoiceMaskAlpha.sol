@@ -11,8 +11,9 @@ contract VoiceMaskAlpha is IVoiceMaskAlpha, ERC721A, ERC721AQueryable, Ownable {
 
     address public minter;
     string private baseURI;
-    uint256 public maxSupply = 200;
+    uint256 public auctionSupply = 140;
     uint256 public teamSupply = 60;
+    uint256 public auctionCount = 0;
     uint256 public teamCount = 0;
 
     modifier onlyMinter() {
@@ -21,8 +22,11 @@ contract VoiceMaskAlpha is IVoiceMaskAlpha, ERC721A, ERC721AQueryable, Ownable {
     }
 
     function mintAuction() external onlyMinter returns (uint256) {
-        require(_nextTokenId() <= maxSupply, "All sold out");
-
+        require(
+            auctionCount + 1 <= auctionSupply,
+            "Auction supply all sold out"
+        );
+        auctionCount++;
         return _mintTo(msg.sender, 1);
     }
 
@@ -32,7 +36,6 @@ contract VoiceMaskAlpha is IVoiceMaskAlpha, ERC721A, ERC721AQueryable, Ownable {
         returns (uint256)
     {
         require(teamCount + quantity <= teamSupply, "Team supply all sold out");
-        require(_nextTokenId() <= maxSupply, "All sold out");
 
         teamCount++;
         return _mintTo(to, quantity);
@@ -53,8 +56,8 @@ contract VoiceMaskAlpha is IVoiceMaskAlpha, ERC721A, ERC721AQueryable, Ownable {
         emit MinterUpdated(minter);
     }
 
-    function setMaxSupply(uint256 _maxMint) external onlyOwner {
-        maxSupply = _maxMint;
+    function setAuctionSupply(uint256 _maxMint) external onlyOwner {
+        auctionSupply = _maxMint;
     }
 
     function setTeamSupply(uint256 _maxMint) external onlyOwner {
@@ -66,7 +69,10 @@ contract VoiceMaskAlpha is IVoiceMaskAlpha, ERC721A, ERC721AQueryable, Ownable {
     }
 
     function _mintTo(address to, uint256 quantity) internal returns (uint256) {
-        require(_totalMinted() + quantity <= maxSupply, "All sold out");
+        require(
+            _totalMinted() + quantity <= auctionSupply + teamSupply,
+            "All sold out"
+        );
 
         _mint(to, quantity);
         emit AlphaCreated(_totalMinted(), to);
