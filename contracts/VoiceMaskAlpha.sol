@@ -37,7 +37,9 @@ contract VoiceMaskAlpha is IVoiceMaskAlpha, ERC721A, ERC721AQueryable, Ownable {
         onlyOwner
         returns (uint256)
     {
-        require(teamCount + 1 <= teamSupply, "Team supply all sold out");
+        //mint one by one
+        _quantity = 1;
+        require(teamCount + _quantity <= teamSupply, "Team supply all sold out");
 
         teamCount++;
         return _mintTo(to);
