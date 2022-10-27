@@ -4,7 +4,7 @@
 // VMAAuction.sol is a modified version of Nouns' NounsAuctionHouse.sol:
 // https://github.com/nounsDAO/nouns-monorepo/blob/master/packages/nouns-contracts/contracts/NounsAuctionHouse.sol
 //
-// VMAAuction.sol source code Copyright Nouns licensed under the GPL-3.0 license.
+// VMAAuction.sol source code Copyright LOVO licensed under the GPL-3.0 license.
 // With modifications by Nounders DAO.
 
 pragma solidity ^0.8.16;
@@ -19,11 +19,13 @@ import {IVoiceMaskAlpha} from "./interfaces/IVoiceMaskAlpha.sol";
 contract VMAAuction is IVMAAuction, Pausable, ReentrancyGuard, Ownable {
     IVoiceMaskAlpha public voiceMaskAlpha;
 
+    address public tester; //TODO remove this later
+
     uint256 public timeBuffer;
 
     uint256 public reservePrice;
 
-    uint256 public duration;
+    uint256 public durationTime;
 
     uint256 public gas;
 
@@ -33,20 +35,35 @@ contract VMAAuction is IVMAAuction, Pausable, ReentrancyGuard, Ownable {
 
     constructor(
         IVoiceMaskAlpha _alpha, //alpha nft
-        uint256 _timeBuffer, //새 입찰 생성되고 옥션에 남은 최소 시간 줌. 300 = 5분
-        uint256 _reservePrice, //최저가 1 => 0만 아니면됨
-        uint256 _duration, //하나의 옥션이 몇분동안 진행되는지 43200 = 12시간
-        uint8 _minBidIncrementPercentage //비드 증감율 현재 2퍼센트
+        uint256 _timeBuffer, // padding time. 300 = 5min
+        uint256 _reservePrice, // at least 0
+        uint256 _durationTime, // 43200 = 12hrs
+        uint8 _minBidIncrementPercentage // 2%
     ) {
         _pause();
 
         voiceMaskAlpha = _alpha;
         timeBuffer = _timeBuffer;
         reservePrice = _reservePrice;
-        duration = _duration;
+        durationTime = _durationTime;
         minBidIncrementPercentage = _minBidIncrementPercentage;
         gas = 30000;
     }
+
+    //TODO remove later
+    modifier onlyTester() {
+        require(msg.sender == tester, "Sender is not the tester");
+        _;
+    }
+
+    function setTester(address _tester) external onlyOwner {
+        tester = _tester;
+    }
+
+    function setDuration(uint256 _durationTime) external onlyTester {
+        durationTime = _durationTime;
+    }
+    //===============TODO remove till here
 
     function settleCurrentAndCreateNewAuction()
         external
@@ -176,7 +193,7 @@ contract VMAAuction is IVMAAuction, Pausable, ReentrancyGuard, Ownable {
     function _createAuction() internal {
         try voiceMaskAlpha.mintAuction() returns (uint256 alphaId) {
             uint256 startTime = block.timestamp;
-            uint256 endTime = startTime + duration;
+            uint256 endTime = startTime + durationTime;
 
             auction = Auction({
                 alphaId: alphaId,
