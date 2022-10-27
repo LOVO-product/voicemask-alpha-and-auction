@@ -5,7 +5,7 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-wit
 
 
 
-describe("Alpha + Auction", function () {
+describe.skip("Alpha + Auction", function () {
   let owner: SignerWithAddress;
   let user1: SignerWithAddress;
   let user2: SignerWithAddress;
@@ -27,29 +27,55 @@ describe("Alpha + Auction", function () {
       await this.vmAlpha.connect(owner).setBaseURI(baseUri);
 
     })
+    it("Set mint number", async function () {
+      await this.vmAlpha.connect(owner).setMaxSupply(7);
+      await this.vmAlpha.connect(owner).setTeamSupply(5);
+      
+
+    });
 
     it("Should success mint", async function () {
       await this.vmAlpha.connect(owner).mintTeam(owner.address, 1);
       await this.vmAlpha.connect(owner).mintTeam(user1.address, 1);
+      await this.vmAlpha.connect(owner).mintTeam(owner.address, 1);
+      await this.vmAlpha.connect(owner).mintTeam(owner.address, 1);
 
       let id = await this.vmAlpha.tokensOfOwner(owner.address);
       console.log(id);
-      // await this.vmAlpha.connect(owner).mintTeam(owner.address, 1);
 
-      const uri = await this.vmAlpha.tokenURI(0);
-      console.log(uri);
-
-      await this.vmAlpha.connect(owner).burn(0);
-      await this.vmAlpha.tokensOfOwner(owner.address);
+      let id2 = await this.vmAlpha.tokensOfOwner(user1.address);
+      console.log(id2);
 
     });
 
+    it("Should fail mint", async function () {
+      await expect(this.vmAlpha.connect(user2).mintTeam(user2.address, 1)).to.be.revertedWith('Ownable: caller is not the owner');
+    });
+
+    it("Should fail mint", async function () {
+      await this.vmAlpha.connect(owner).setMinter(user1.address);
+      await expect(this.vmAlpha.connect(user1).mintTeam(user1.address, 1)).to.be.revertedWith('Ownable: caller is not the owner');
+      await this.vmAlpha.connect(user1).mintAuction();
+      let id2 = await this.vmAlpha.tokensOfOwner(user1.address);
+      console.log(id2);
+    });
+
+
+    it("Should fail mint", async function () {
+      await this.vmAlpha.connect(owner).mintTeam(owner.address, 1);
+      await expect(this.vmAlpha.connect(owner).mintTeam(owner.address, 1)).to.be.revertedWith('Team supply all sold out');
+    });
+
+    it("Should fail mint", async function () {
+      await this.vmAlpha.connect(user1).mintAuction();
+      await expect(this.vmAlpha.connect(user1).mintAuction()).to.be.revertedWith('All sold out');
+
+      // await expect(this.vmAlpha.connect(owner).mintTeam(owner.address, 1)).to.be.revertedWith('All sold out');
+    });
+
+
   });
 
 
-  describe("Failure scenario", function () {
-    
-  
-  });
 
 });
