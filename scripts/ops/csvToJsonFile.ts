@@ -10,27 +10,44 @@ async function main() {
     const jsonArray = await csv().fromFile(csvFilePath);
     // console.log(jsonArray);
 
-    let n = 2;//jsonArray.length;
+    let n = 30;//jsonArray.length;
 
     for (let i = 0; i < n; i++) {
-        let one = {
+        // let one = {
+        //     attributes: [
+        //         {
+        //             trait_type: "Mask Type",
+        //             value: "Alpha"
+        //         },
+        //         {
+        //             trait_type: "Voice",
+        //             value: jsonArray[i].Voice_ID
+        //         },
+        //         {
+        //             trait_type: "Name",
+        //             value: jsonArray[i].Name
+        //         }
+        //     ],
+        //     description: "Voice mask gave super power to chosen PFPs. Now your PFPs can speak Korean.",
+        //     image: `https://lovo.mypinata.cloud/ipfs/QmXn1Fmz5Wh7nYg5yZnb62TYbxj7vW7gt3BwceMf27YAz2/${i}.png`,
+        //     name: `Voice Mask Alpha #${jsonArray[i].Name}`,
+        // }
+        // await saveFile(one, i);
+
+        let sample = {
             attributes: [
                 {
-                    trait_type: "Voice",
-                    value: "Voice Serum"
+                    trait_type: "Mask Type",
+                    value: "Alpha"
                 },
-                {
-                    trait_type: "Name",
-                    value: jsonArray[i].Name
-                }
             ],
-            description: "Voice mask gave super power to chosen PFPs. Now your PFPs can speak Korean.",
-            image: `https://lovo.mypinata.cloud/ipfs/QmXn1Fmz5Wh7nYg5yZnb62TYbxj7vW7gt3BwceMf27YAz2/${i}.png`,
-            name: `Voice Mask Alpha #${jsonArray[i].Name}`,
+            description: "Voice mask gave super power to chosen PFPs. Get ready for your NFTs.",
+            image: `https://lovo.mypinata.cloud/ipfs/QmQjDdcVhmQo4L5TP319CAKySJCeq7zdTGxUNQ19mg5HUc/preview.gif`,
+            animation: `https://lovo.mypinata.cloud/ipfs/QmQjDdcVhmQo4L5TP319CAKySJCeq7zdTGxUNQ19mg5HUc/preview.gif`,
+            name: `Voice Mask Alpha #${i}`,
         }
-        console.log(one);
+        await saveFile(sample, i);
 
-        await saveFile(one, i);
     }
 
 
