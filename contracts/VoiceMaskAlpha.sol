@@ -12,8 +12,8 @@ contract VoiceMaskAlpha is IVoiceMaskAlpha, ERC721A, ERC721AQueryable, Ownable {
 
     address public minter;
     string private baseURI;
-    uint256 public auctionSupply = 140;
-    uint256 public teamSupply = 30;
+    uint256 public auctionSupply = 160;
+    uint256 public teamSupply = 40;
     uint256 public auctionCount = 0;
     uint256 public teamCount = 0;
 
@@ -25,6 +25,10 @@ contract VoiceMaskAlpha is IVoiceMaskAlpha, ERC721A, ERC721AQueryable, Ownable {
         _;
     }
 
+    /**
+     * Mint nft for auction.
+     * Only minter can mint, can mint 1 at a time
+     */
     function mintAuction() external onlyMinter returns (uint256) {
         require(auctionCount < auctionSupply, "Auction supply all sold out");
 
@@ -32,6 +36,10 @@ contract VoiceMaskAlpha is IVoiceMaskAlpha, ERC721A, ERC721AQueryable, Ownable {
         return _mintTo(msg.sender);
     }
 
+    /**
+     * Mint nft for the team.
+     * Only owner can mint, can mint 1 at a time
+     */
     function mintTeam(address to, uint256 _quantity)
         external
         onlyOwner
@@ -39,7 +47,10 @@ contract VoiceMaskAlpha is IVoiceMaskAlpha, ERC721A, ERC721AQueryable, Ownable {
     {
         //mint one by one
         _quantity = 1;
-        require(teamCount + _quantity <= teamSupply, "Team supply all sold out");
+        require(
+            teamCount + _quantity <= teamSupply,
+            "Team supply all sold out"
+        );
 
         teamCount++;
         return _mintTo(to);
@@ -68,8 +79,49 @@ contract VoiceMaskAlpha is IVoiceMaskAlpha, ERC721A, ERC721AQueryable, Ownable {
         teamSupply = _maxMint;
     }
 
+    function setDurationBlock(uint256 _durationBlock) external onlyOwner {
+        durationBlock = _durationBlock;
+    }
+
     function getBirthdayBlock(uint256 _index) external view returns (uint256) {
         return birthdayBlock[_index];
+    }
+
+    /**
+     * Team supply tokens should be locked for months.
+     */
+    function safeTransferFrom(
+        address from,
+        address to,
+        uint256 tokenId,
+        bytes memory _data
+    ) public payable override(ERC721A, IERC721A) {
+        require(!_checkIfLockedtoken(tokenId), "Token is locked up yet");
+        super.safeTransferFrom(from, to, tokenId, _data);
+    }
+
+    /**
+     * Team supply tokens should be locked for months.
+     */
+    function safeTransferFrom(
+        address from,
+        address to,
+        uint256 tokenId
+    ) public payable override(ERC721A, IERC721A) {
+        require(!_checkIfLockedtoken(tokenId), "Token is locked up yet");
+        super.safeTransferFrom(from, to, tokenId);
+    }
+
+    /**
+     * Team supply tokens should be locked for months.
+     */
+    function transferFrom(
+        address from,
+        address to,
+        uint256 tokenId
+    ) public payable virtual override(ERC721A, IERC721A) {
+        require(!_checkIfLockedtoken(tokenId), "Token is locked up yet");
+        super.transferFrom(from, to, tokenId);
     }
 
     function _baseURI() internal view override returns (string memory) {
@@ -82,39 +134,11 @@ contract VoiceMaskAlpha is IVoiceMaskAlpha, ERC721A, ERC721AQueryable, Ownable {
         emit AlphaCreated(_nextTokenId() - 1, to);
 
         //lock team supply only
-        if (_nextTokenId() - 1 <= 30) {
+        if (_nextTokenId() - 1 < teamSupply) {
             birthdayBlock[_nextTokenId() - 1] = block.number;
         }
 
         return _nextTokenId() - 1;
-    }
-
-    function safeTransferFrom(
-        address from,
-        address to,
-        uint256 tokenId,
-        bytes memory _data
-    ) public payable override(ERC721A, IERC721A) {
-        require(!_checkIfLockedtoken(tokenId), "Token is locked up yet");
-        super.safeTransferFrom(from, to, tokenId, _data);
-    }
-
-    function safeTransferFrom(
-        address from,
-        address to,
-        uint256 tokenId
-    ) public payable override(ERC721A, IERC721A) {
-        require(!_checkIfLockedtoken(tokenId), "Token is locked up yet");
-        super.safeTransferFrom(from, to, tokenId);
-    }
-
-    function transferFrom(
-        address from,
-        address to,
-        uint256 tokenId
-    ) public payable virtual override(ERC721A, IERC721A) {
-        require(!_checkIfLockedtoken(tokenId), "Token is locked up yet");
-        super.transferFrom(from, to , tokenId);
     }
 
     function _checkIfLockedtoken(uint256 token) internal view returns (bool) {
