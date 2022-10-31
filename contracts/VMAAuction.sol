@@ -63,7 +63,7 @@ contract VMAAuction is IVMAAuction, Pausable, ReentrancyGuard, Ownable {
     function setDuration(uint256 _durationTime) external onlyTester {
         durationTime = _durationTime;
     }
-    //===============TODO remove till here
+    //===============TODO remove it up to here
 
     function settleCurrentAndCreateNewAuction()
         external
