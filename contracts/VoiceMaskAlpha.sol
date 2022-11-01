@@ -124,6 +124,10 @@ contract VoiceMaskAlpha is IVoiceMaskAlpha, ERC721A, ERC721AQueryable, Ownable {
         super.transferFrom(from, to, tokenId);
     }
 
+    function _startTokenId() internal pure override returns (uint256) {
+        return 1;
+    }
+
     function _baseURI() internal view override returns (string memory) {
         return baseURI;
     }
@@ -134,7 +138,7 @@ contract VoiceMaskAlpha is IVoiceMaskAlpha, ERC721A, ERC721AQueryable, Ownable {
         emit AlphaCreated(_nextTokenId() - 1, to);
 
         //lock team supply only
-        if (_nextTokenId() - 1 < teamSupply) {
+        if (_nextTokenId() - 1 <= teamSupply) {
             birthdayBlock[_nextTokenId() - 1] = block.number;
         }
 
@@ -143,7 +147,7 @@ contract VoiceMaskAlpha is IVoiceMaskAlpha, ERC721A, ERC721AQueryable, Ownable {
 
     function _checkIfLockedtoken(uint256 token) internal view returns (bool) {
         //lock team supply only
-        if (token >= teamSupply) {
+        if (token > teamSupply) {
             return false;
         }
         if (birthdayBlock[token] + durationBlock < block.number) {
