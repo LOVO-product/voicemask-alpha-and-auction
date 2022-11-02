@@ -1,39 +1,96 @@
 // require csvtojson
 const csv = require("csvtojson");
-const csvFilePath = "./scripts/ops/Influencer_ex.csv";
+const csvFilePath = "./scripts/ops/Influencer.csv";
 import * as fs from 'fs';
 
 //TODO json 업데이트시 json 안에있는 이미지파일 cid 도 업데이트하기
 interface nft { attributes: { trait_type: string; value: any; }[]; description: string; image: string; name: string; }
 async function main() {
     //Use async / await
-    const jsonArray = await csv().fromFile(csvFilePath);
+    // const jsonArray = await csv().fromFile(csvFilePath);
     // console.log(jsonArray);
 
-    let n = 30;//jsonArray.length;
+    await makeInfluencers();
+
+}
+
+const makeAuction = async (startIdx: number, totalAmount: number) => {
+    const jsonArray = await csv().fromFile(csvFilePath);
+
+    for (let i = startIdx; i < startIdx + totalAmount; i++) {
+        let auction = {
+            attributes: [
+                {
+                    trait_type: "Mask Type",
+                    value: "Alpha"
+                },
+                {
+                    trait_type: "Voice Type",
+                    value: jsonArray[i].voice_type_metadata
+                },
+                {
+                    trait_type: "Voice ID",
+                    value: jsonArray[i].voice_id_metadata
+                },
+                {
+                    trait_type: "Language",
+                    value: jsonArray[i].language_metadata
+                },
+                {
+                    trait_type: "Edition",
+                    value: jsonArray[i].Edition_metadata
+                },
+            ],
+            description: jsonArray[i].Description_PFP_Link + " " + jsonArray[i].Description_ENG_metadata,
+            image: `https://lovo.mypinata.cloud/ipfs/QmTjatjspnsFudFBiRdwVmEuyVGFYVCA11TqYi2jN4h6jz/${i + 1}.png`,
+            name: jsonArray[i].NFT_Name_metadata,
+        }
+        await saveFile(auction, i);
+    }
+}
+
+const makeInfluencers = async () => {
+    const jsonArray = await csv().fromFile(csvFilePath);
+
+    let n = 3;//jsonArray.length;
 
     for (let i = 0; i < n; i++) {
-        // let one = {
-        //     attributes: [
-        //         {
-        //             trait_type: "Mask Type",
-        //             value: "Alpha"
-        //         },
-        //         {
-        //             trait_type: "Voice",
-        //             value: jsonArray[i].Voice_ID
-        //         },
-        //         {
-        //             trait_type: "Name",
-        //             value: jsonArray[i].Name
-        //         }
-        //     ],
-        //     description: "Voice mask gave super power to chosen PFPs. Now your PFPs can speak Korean.",
-        //     image: `https://lovo.mypinata.cloud/ipfs/QmXn1Fmz5Wh7nYg5yZnb62TYbxj7vW7gt3BwceMf27YAz2/${i}.png`,
-        //     name: `Voice Mask Alpha #${jsonArray[i].Name}`,
-        // }
-        // await saveFile(one, i);
+        let influencer = {
+            attributes: [
+                {
+                    trait_type: "Mask Type",
+                    value: "Alpha"
+                },
+                {
+                    trait_type: "Voice Type",
+                    value: jsonArray[i].voice_type_metadata
+                },
+                {
+                    trait_type: "Voice ID",
+                    value: jsonArray[i].voice_id_metadata
+                },
+                {
+                    trait_type: "Language",
+                    value: jsonArray[i].language_metadata
+                },
+                {
+                    trait_type: "Edition",
+                    value: jsonArray[i].Edition_metadata
+                },
+            ],
+            description: jsonArray[i].Description_PFP_Link + " " + jsonArray[i].Description_ENG_metadata,
+            image: jsonArray[i].image,
+            animation_url: jsonArray[i].animation_url,
+            name: jsonArray[i].NFT_Name_metadata,
+        }
+        await saveFile(influencer, i + 1);
 
+    }
+}
+
+const makeUnreveal = async (startIdx: number, totalAmount: number) => {
+
+    for (let i = startIdx; i < startIdx + totalAmount; i++) {
         let sample = {
             attributes: [
                 {
@@ -43,15 +100,10 @@ async function main() {
             ],
             description: "Voice mask gave super power to chosen PFPs. Get ready for your NFTs.",
             image: `https://lovo.mypinata.cloud/ipfs/QmQjDdcVhmQo4L5TP319CAKySJCeq7zdTGxUNQ19mg5HUc/preview.gif`,
-            animation: `https://lovo.mypinata.cloud/ipfs/QmQjDdcVhmQo4L5TP319CAKySJCeq7zdTGxUNQ19mg5HUc/preview.gif`,
             name: `Voice Mask Alpha #${i}`,
         }
         await saveFile(sample, i);
-
     }
-
-
-
 }
 
 
