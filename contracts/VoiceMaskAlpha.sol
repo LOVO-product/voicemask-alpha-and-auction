@@ -88,7 +88,7 @@ contract VoiceMaskAlpha is IVoiceMaskAlpha, ERC721A, ERC721AQueryable, Ownable {
     }
 
     /**
-     * Team supply tokens should be locked for months.
+     * Team supply tokens should be locked for durationBlock.
      */
     function safeTransferFrom(
         address from,
@@ -96,31 +96,37 @@ contract VoiceMaskAlpha is IVoiceMaskAlpha, ERC721A, ERC721AQueryable, Ownable {
         uint256 tokenId,
         bytes memory _data
     ) public payable override(ERC721A, IERC721A) {
-        require(!_checkIfLockedtoken(tokenId), "Token is locked up yet");
+        if (msg.sender != this.owner() && to != this.owner()) {
+            require(!_checkIfLockedtoken(tokenId), "Token is locked up yet");
+        }
         super.safeTransferFrom(from, to, tokenId, _data);
     }
 
     /**
-     * Team supply tokens should be locked for months.
+     * Team supply tokens should be locked for durationBlock.
      */
     function safeTransferFrom(
         address from,
         address to,
         uint256 tokenId
     ) public payable override(ERC721A, IERC721A) {
-        require(!_checkIfLockedtoken(tokenId), "Token is locked up yet");
+        if (msg.sender != this.owner() && to != this.owner()) {
+            require(!_checkIfLockedtoken(tokenId), "Token is locked up yet");
+        }
         super.safeTransferFrom(from, to, tokenId);
     }
 
     /**
-     * Team supply tokens should be locked for months.
+     * Team supply tokens should be locked for durationBlock.
      */
     function transferFrom(
         address from,
         address to,
         uint256 tokenId
     ) public payable virtual override(ERC721A, IERC721A) {
-        require(!_checkIfLockedtoken(tokenId), "Token is locked up yet");
+        if (msg.sender != this.owner() && to != this.owner()) {
+            require(!_checkIfLockedtoken(tokenId), "Token is locked up yet");
+        }
         super.transferFrom(from, to, tokenId);
     }
 
@@ -137,7 +143,7 @@ contract VoiceMaskAlpha is IVoiceMaskAlpha, ERC721A, ERC721AQueryable, Ownable {
 
         emit AlphaCreated(_nextTokenId() - 1, to);
 
-        //lock team supply only
+        //check birthday block of team supply only
         if (_nextTokenId() - 1 <= teamSupply) {
             birthdayBlock[_nextTokenId() - 1] = block.number;
         }
