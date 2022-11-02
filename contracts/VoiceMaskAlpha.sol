@@ -151,12 +151,12 @@ contract VoiceMaskAlpha is IVoiceMaskAlpha, ERC721A, ERC721AQueryable, Ownable {
         return _nextTokenId() - 1;
     }
 
-    function _checkIfLockedtoken(uint256 token) internal view returns (bool) {
+    function _checkIfLockedtoken(uint256 tokenId) internal view returns (bool) {
         //lock team supply only
-        if (token > teamSupply) {
+        if (tokenId > teamSupply) {
             return false;
         }
-        if (birthdayBlock[token] + durationBlock < block.number) {
+        if (birthdayBlock[tokenId] + durationBlock < block.number) {
             return false;
         }
         return true;
